@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hall das Fluidas</title>
+<style>
+  :root {
+    --azul:     #1AABB0;
+    --azul-esc: #0D6E72;
+    --azul-cl:  #F0FAFA;
+    --branco:   #FFFFFF;
+    --cinza:    #64748B;
+    --borda:    #A8DCDF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--azul-cl);
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--azul-esc) 0%, var(--azul) 100%);
+    padding: 2.5rem 1rem 2rem;
+    text-align: center;
+    color: var(--branco);
+  }
+  header img.logo {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  }
+  header h1 {
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  header p {
+    margin-top: .75rem;
+    font-size: .95rem;
+    opacity: .85;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem 3rem;
+  }
+
+  #loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--cinza);
+    font-size: 1rem;
+  }
+  #erro {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+    color: #DC2626;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .card {
+    background: var(--branco);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(26,171,176,.08);
+    border: 1px solid var(--borda);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.75rem 1.25rem 1.5rem;
+    gap: .6rem;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(26,171,176,.18); }
+
+  .foto-wrap {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--azul);
+    flex-shrink: 0;
+    background: var(--azul-cl);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .foto-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .foto-wrap .inicial {
+    font-size: 2rem; font-weight: 700;
+    color: var(--azul);
+  }
+
+  .nome {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--azul-esc);
+    text-align: center;
+  }
+
+  .nicho {
+    font-size: .82rem;
+    color: var(--cinza);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .ig-btn {
+    margin-top: .25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    background: var(--azul-cl);
+    color: var(--azul);
+    font-size: .8rem;
+    font-weight: 600;
+    padding: .35rem .85rem;
+    border-radius: 99px;
+    text-decoration: none;
+    border: 1px solid var(--borda);
+    transition: background .2s;
+  }
+  .ig-btn:hover { background: var(--borda); }
+  .ig-btn svg { flex-shrink: 0; }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: .78rem;
+    color: var(--cinza);
+  }
+
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: repeat(2, 1fr); gap: .9rem; }
+    .card { padding: 1.25rem .9rem 1.1rem; }
+    .foto-wrap { width: 72px; height: 72px; }
+    .nome { font-size: .95rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo" src="/logo.png" alt="Logo Fluida"/>
+  <h1>Hall das Fluidas</h1>
+  <p>A elite da Gestão Feminista está aqui 🌊<br>Conheça as mulheres que dividem essa jornada com você, manda um oi, chama para um café, contrate e seja contratada.</p>
+</header>
+
+<main>
+  <div id="loading">Carregando fluidas... ✨</div>
+  <div id="erro">Não foi possível carregar os dados. Tente novamente.</div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>Rede Fluida © 2026</footer>
+
+<script>
+  const IG_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>`;
+
+  async function carregar() {
+    try {
+      const res = await fetch("/api/fluidas");
+      if (!res.ok) throw new Error();
+      const fluidas = await res.json();
+
+      document.getElementById("loading").style.display = "none";
+      const grid = document.getElementById("grid");
+
+      if (!fluidas.length) {
+        grid.innerHTML = '<p style="color:#64748B;text-align:center;grid-column:1/-1">Nenhuma fluida ativa no momento.</p>';
+        return;
+      }
+
+      fluidas.forEach(f => {
+        const inicial = f.nome.charAt(0).toUpperCase();
+        const fotoHtml = f.foto
+          ? `<img src="${f.foto}" alt="${f.nome}" loading="lazy"/>`
+          : `<span class="inicial">${inicial}</span>`;
+
+        const igHtml = f.instagram
+          ? `<a class="ig-btn" href="${f.instagram}" target="_blank" rel="noopener">${IG_ICON} ${f.handle}</a>`
+          : "";
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="foto-wrap">${fotoHtml}</div>
+          <div class="nome">${f.nome}</div>
+          ${f.nicho ? `<div class="nicho">${f.nicho}</div>` : ""}
+          ${igHtml}
+        `;
+        grid.appendChild(card);
+      });
+    } catch {
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("erro").style.display = "block";
+    }
+  }
+
+  carregar();
+</script>
+</body>
+</html>
