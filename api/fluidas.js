@@ -1,9 +1,9 @@
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-
+ 
   const token = process.env.NOTION_TOKEN;
   const dbId  = process.env.NOTION_DB_ID;
-
+ 
   try {
     const r = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
       method: "POST",
@@ -18,48 +18,24 @@ export default async function handler(req, res) {
           select: { equals: "Ativa" },
         },
         sorts: [{ property: "Mentoradas", direction: "ascending" }],
+        page_size: 1,
       }),
     });
-
+ 
     const data = await r.json();
-
+ 
     if (!data.results) {
-      return res.status(200).json({ debug: true, status: r.status, data });
+      return res.status(200).json({ debug: true, data });
     }
-
-    const fluidas = data.results.map(p => {
-      const props = p.properties;
-
-      const nome = props["Mentoradas"]?.title?.[0]?.plain_text ?? "";
-
-      const instagramRaw = props["INSTAGRAM"]?.url
-        ?? props["INSTAGRAM"]?.rich_text?.[0]?.plain_text
-        ?? "";
-
-      // Garante que a URL sempre tem https://
-      let instagram = instagramRaw.replace(/\/$/, "");
-      if (instagram && !instagram.startsWith("http")) {
-        instagram = "https://" + instagram;
-      }
-
-      const handle = instagram
-        .replace("https://www.instagram.com/", "@")
-        .replace("https://instagram.com/", "@")
-        .replace("http://www.instagram.com/", "@")
-        .replace("http://instagram.com/", "@");
-
-      const nicho = props["Nicho"]?.rich_text?.[0]?.plain_text ?? "";
-
-      const foto = p.icon?.type === "file"
-        ? p.icon.file.url
-        : p.icon?.type === "external"
-        ? p.icon.external.url
-        : null;
-
-      return { nome, instagram, handle, nicho, foto };
-    }).filter(f => f.nome);
-
-    res.status(200).json(fluidas);
+ 
+    // Debug: mostra o campo INSTAGRAM cru da primeira mentorada
+    const primeira = data.results[0];
+    return res.status(200).json({
+      debug: true,
+      nome: primeira.properties["Mentoradas"]?.title?.[0]?.plain_text,
+      instagram_raw: primeira.properties["INSTAGRAM"],
+    });
+ 
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
