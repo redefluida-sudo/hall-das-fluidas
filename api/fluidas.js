@@ -1,9 +1,9 @@
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
- 
+
   const token = process.env.NOTION_TOKEN;
   const dbId  = process.env.NOTION_DB_ID;
- 
+
   try {
     const r = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
       method: "POST",
@@ -21,21 +21,21 @@ export default async function handler(req, res) {
         page_size: 1,
       }),
     });
- 
+
     const data = await r.json();
- 
+
     if (!data.results) {
       return res.status(200).json({ debug: true, data });
     }
- 
-    // Debug: mostra o campo INSTAGRAM cru da primeira mentorada
+
+    // Mostra TODOS os campos da primeira mentorada
     const primeira = data.results[0];
     return res.status(200).json({
       debug: true,
-      nome: primeira.properties["Mentoradas"]?.title?.[0]?.plain_text,
-      instagram_raw: primeira.properties["INSTAGRAM"],
+      todos_os_campos: Object.keys(primeira.properties),
+      properties: primeira.properties,
     });
- 
+
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
