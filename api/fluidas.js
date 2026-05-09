@@ -23,7 +23,6 @@ export default async function handler(req, res) {
 
     const data = await r.json();
 
-    // DEBUG: retorna a resposta bruta do Notion para identificar o problema
     if (!data.results) {
       return res.status(200).json({ debug: true, status: r.status, data });
     }
@@ -33,11 +32,16 @@ export default async function handler(req, res) {
 
       const nome = props["Mentoradas"]?.title?.[0]?.plain_text ?? "";
 
-      const instagramRaw = props["INSTAGRAM"]?.url ?? "";
+      // Aceita campo URL ou rich_text
+      const instagramRaw = props["INSTAGRAM"]?.url
+        ?? props["INSTAGRAM"]?.rich_text?.[0]?.plain_text
+        ?? "";
       const instagram = instagramRaw.replace(/\/$/, "");
       const handle = instagram
         .replace("https://www.instagram.com/", "@")
-        .replace("https://instagram.com/", "@");
+        .replace("https://instagram.com/", "@")
+        .replace("http://www.instagram.com/", "@")
+        .replace("http://instagram.com/", "@");
 
       const nicho = props["Nicho"]?.rich_text?.[0]?.plain_text ?? "";
 
