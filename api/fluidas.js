@@ -32,11 +32,16 @@ export default async function handler(req, res) {
 
       const nome = props["Mentoradas"]?.title?.[0]?.plain_text ?? "";
 
-      // Aceita campo URL ou rich_text
       const instagramRaw = props["INSTAGRAM"]?.url
         ?? props["INSTAGRAM"]?.rich_text?.[0]?.plain_text
         ?? "";
-      const instagram = instagramRaw.replace(/\/$/, "");
+
+      // Garante que a URL sempre tem https://
+      let instagram = instagramRaw.replace(/\/$/, "");
+      if (instagram && !instagram.startsWith("http")) {
+        instagram = "https://" + instagram;
+      }
+
       const handle = instagram
         .replace("https://www.instagram.com/", "@")
         .replace("https://instagram.com/", "@")
