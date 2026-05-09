@@ -18,24 +18,45 @@ export default async function handler(req, res) {
           select: { equals: "Ativa" },
         },
         sorts: [{ property: "Mentoradas", direction: "ascending" }],
-        page_size: 1,
       }),
     });
 
     const data = await r.json();
 
     if (!data.results) {
-      return res.status(200).json({ debug: true, data });
+      return res.status(200).json({ debug: true, status: r.status, data });
     }
 
-    // Mostra TODOS os campos da primeira mentorada
-    const primeira = data.results[0];
-    return res.status(200).json({
-      debug: true,
-      todos_os_campos: Object.keys(primeira.properties),
-      properties: primeira.properties,
-    });
+    const fluidas = data.results.map(p => {
+      const props = p.properties;
 
+      const nome = props["Mentoradas"]?.title?.[0]?.plain_text?.trim() ?? "";
+
+      // Campo tem espaço no final: "INSTAGRAM "
+      const instagramRaw = props["INSTAGRAM "]?.url ?? "";
+      let instagram = instagramRaw.replace(/\/$/, "");
+      if (instagram && !instagram.startsWith("http")) {
+        instagram = "https://" + instagram;
+      }
+
+      const handle = instagram
+        .replace("https://www.instagram.com/", "@")
+        .replace("https://instagram.com/", "@")
+        .replace("http://www.instagram.com/", "@")
+        .replace("http://instagram.com/", "@");
+
+      const nicho = props["Nicho"]?.rich_text?.[0]?.plain_text ?? "";
+
+      const foto = p.icon?.type === "file"
+        ? p.icon.file.url
+        : p.icon?.type === "external"
+        ? p.icon.external.url
+        : null;
+
+      return { nome, instagram, handle, nicho, foto };
+    }).filter(f => f.nome);
+
+    res.status(200).json(fluidas);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
