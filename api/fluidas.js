@@ -23,6 +23,11 @@ export default async function handler(req, res) {
 
     const data = await r.json();
 
+    // DEBUG: retorna a resposta bruta do Notion para identificar o problema
+    if (!data.results) {
+      return res.status(200).json({ debug: true, status: r.status, data });
+    }
+
     const fluidas = data.results.map(p => {
       const props = p.properties;
 
